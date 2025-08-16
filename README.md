@@ -1,2 +1,544 @@
 # Weeks-Organizer-Widget
-A lot
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Week Tracker - Professional</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .widget-card {
+            background: rgba(20, 20, 23, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        
+        .widget-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #7c3aed, #06b6d4, #10b981);
+            opacity: 0.6;
+        }
+        
+        .widget-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .week-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #e4e4e7 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .week-label {
+            font-size: 0.875rem;
+            color: #71717a;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fbbf24;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2px;
+        }
+        
+        .progress-container {
+            margin-bottom: 16px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .progress-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        
+        .progress-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #06b6d4;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #3b82f6);
+            border-radius: 2px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+
+        
+        .timestamp {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #4b5563;
+            text-align: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .week-dots-container {
+            margin-top: 16px;
+        }
+        
+        .week-dots-header {
+            margin-bottom: 8px;
+        }
+        
+        .week-dots {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 8px;
+        }
+        
+        .week-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .week-dot.completed {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            border-color: #7c3aed;
+            box-shadow: 0 0 8px rgba(124, 58, 237, 0.4);
+        }
+        
+        .year-dots .week-dot {
+            width: 8px;
+            height: 8px;
+            border-width: 1px;
+        }
+        
+        .year-dots .week-dot.completed {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-color: #06b6d4;
+            box-shadow: 0 0 6px rgba(6, 182, 212, 0.4);
+        }
+        
+        .week-dot:hover {
+            transform: scale(1.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .month-card {
+            border-top: 2px solid #7c3aed;
+        }
+        
+        .year-card {
+            border-top: 2px solid #06b6d4;
+        }
+        
+        .month-card .week-display {
+            background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .year-card .week-display {
+            background: linear-gradient(135deg, #67e8f9 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .widget-card {
+                padding: 20px;
+            }
+            
+            .week-display {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+        
+        /* Subtle animation for the cards */
+        .widget-card {
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .month-card {
+            animation-delay: 0.1s;
+        }
+        
+        .year-card {
+            animation-delay: 0.2s;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Week of Month Card -->
+        <div class="widget-card month-card">
+            <div class="card-header">
+                <span>Month Progress</span>
+                <div class="status-indicator"></div>
+            </div>
+            
+            <div class="week-display" id="monthWeek">WEEK 0</div>
+            <div class="week-label">of <span id="currentMonth">month</span></div>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="currentDay">0</span>
+                    <span class="stat-label">Day</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="weeksLeftMonth">0</span>
+                    <span class="stat-label">Left</span>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span class="progress-label">Month Progress</span>
+                    <span class="progress-value" id="monthProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="monthProgressBar"></div>
+                </div>
+            </div>
+
+            <div class="week-dots-container">
+                <div class="week-dots-header">
+                    <span class="progress-label">Weeks in Month</span>
+                </div>
+                <div class="week-dots" id="monthWeekDots">
+                    <!-- Dots will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Week of Year Card -->
+        <div class="widget-card year-card">
+            <div class="card-header">
+                <span>Year Progress</span>
+                <div class="status-indicator"></div>
+            </div>
+            
+            <div class="week-display" id="yearWeek">WEEK 0</div>
+            <div class="week-label">of <span id="currentYear">year</span></div>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="dayOfYear">0</span>
+                    <span class="stat-label">Day</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="weeksLeftYear">0</span>
+                    <span class="stat-label">Left</span>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span class="progress-label">Year Progress</span>
+                    <span class="progress-value" id="yearProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="yearProgressBar"></div>
+                </div>
+            </div>
+
+            <div class="week-dots-container">
+                <div class="week-dots-header">
+                    <span class="progress-label">Weeks in Year</span>
+                </div>
+                <div class="week-dots year-dots" id="yearWeekDots">
+                    <!-- Dots will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timestamp at bottom -->
+    <div class="timestamp" id="lastUpdated" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: auto;">
+        Last updated: --
+    </div>
+
+    <script>
+        function getWeekOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 1);
+            const diff = date - start + (start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
+            const oneWeek = 604800000; // milliseconds in one week
+            return Math.ceil(diff / oneWeek);
+        }
+        
+        function getDayOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 0);
+            const diff = date - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay);
+        }
+        
+        function isLeapYear(year) {
+            return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+        }
+        
+        function getTotalWeeksInMonth(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const firstDayWeekday = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            return Math.ceil((daysInMonth + firstDayWeekday) / 7);
+        }
+        
+        function getTotalWeeksInYear(year) {
+            const firstDay = new Date(year, 0, 1);
+            const lastDay = new Date(year, 11, 31);
+            return getWeekOfYear(lastDay);
+        }
+        
+        function createWeekDots(container, totalWeeks, currentWeek, isYear = false) {
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= totalWeeks; i++) {
+                const dot = document.createElement('div');
+                dot.className = `week-dot${i <= currentWeek ? ' completed' : ''}`;
+                dot.title = `Week ${i}${i <= currentWeek ? ' (completed)' : ' (remaining)'}`;
+                container.appendChild(dot);
+            }
+        }
+        
+        function updateWeekTrackers() {
+            const now = new Date();
+            
+            // Basic date info
+            const dayOfMonth = now.getDate();
+            const month = now.toLocaleDateString('en-US', { month: 'long' });
+            const year = now.getFullYear();
+            const monthIndex = now.getMonth();
+            
+            // Week calculations
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const firstDayWeekday = firstDay.getDay();
+            const weekOfMonth = Math.ceil((dayOfMonth + firstDayWeekday) / 7);
+            const weekOfYear = getWeekOfYear(now);
+            
+            // Total weeks calculations
+            const totalWeeksInMonth = getTotalWeeksInMonth(year, monthIndex);
+            const totalWeeksInYear = getTotalWeeksInYear(year);
+            
+            // Weeks remaining calculations
+            const weeksLeftInMonth = totalWeeksInMonth - weekOfMonth;
+            const weeksLeftInYear = totalWeeksInYear - weekOfYear;
+            
+            // Days calculations
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const dayOfYear = getDayOfYear(now);
+            const totalYearDays = isLeapYear(year) ? 366 : 365;
+            
+            // Progress calculations
+            const monthProgress = Math.round((dayOfMonth / daysInMonth) * 100);
+            const yearProgress = Math.round((dayOfYear / totalYearDays) * 100);
+            
+            // Update Month Card
+            document.getElementById('monthWeek').textContent = `WEEK ${weekOfMonth}`;
+            document.getElementById('currentMonth').textContent = month;
+            document.getElementById('currentDay').textContent = dayOfMonth;
+            document.getElementById('weeksLeftMonth').textContent = weeksLeftInMonth;
+            document.getElementById('monthProgress').textContent = `${monthProgress}%`;
+            document.getElementById('monthProgressBar').style.width = `${monthProgress}%`;
+            
+            // Update Year Card  
+            document.getElementById('yearWeek').textContent = `WEEK ${weekOfYear}`;
+            document.getElementById('currentYear').textContent = year;
+            document.getElementById('dayOfYear').textContent = dayOfYear;
+            document.getElementById('weeksLeftYear').textContent = weeksLeftInYear;
+            document.getElementById('yearProgress').textContent = `${yearProgress}%`;
+            document.getElementById('yearProgressBar').style.width = `${yearProgress}%`;
+            
+            // Create week dots
+            const monthDotsContainer = document.getElementById('monthWeekDots');
+            const yearDotsContainer = document.getElementById('yearWeekDots');
+            
+            createWeekDots(monthDotsContainer, totalWeeksInMonth, weekOfMonth, false);
+            createWeekDots(yearDotsContainer, totalWeeksInYear, weekOfYear, true);
+            
+            // Update timestamp
+            const timestamp = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdated').textContent = `Last updated: ${timestamp}`;
+        }
+        
+        // Initialize
+        updateWeekTrackers();
+        
+        // Update every 30 seconds for smooth experience
+        setInterval(updateWeekTrackers, 30000);
+        
+        // Update immediately when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateWeekTrackers();
+            }
+        });
+        
+        // Smooth entrance animation
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '1';
+        });
+    </script>
+</body>
+</html>
